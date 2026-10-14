@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liceo</title>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+        }
+
+        nav {
+            display: flex;
+            justify-content: center;
+            background: #ffffff;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            padding: 15px 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        nav button.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        main {
+            flex: 1;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .section { display: none; }
+        .section.active { display: block; }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        input, select, textarea, button {
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        input[type="text"], input[type="date"], select, textarea {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .btn-main {
+            background: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-main:hover { background: var(--primary-dark); }
+
+        ul { list-style: none; padding: 0; }
+        li {
+            background: white;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        li.completed span {
+            text-decoration: line-through;
+            color: #94a3b8;
+        }
+
+        .actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-delete {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-toggle {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* Cuadernolas Grid */
+        .subjects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+        }
+
+        .subject-card {
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .subject-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary);
+        }
+
+        .notebook-view {
+            display: none;
+        }
+
+        .notebook-pages {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+
+        .page-tab {
+            background: #e2e8f0;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .page-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        textarea.notebook-editor {
+            width: 100%;
+            height: 350px;
+            resize: vertical;
+            line-height: 1.6;
+            background-color: #fefefe;
+            background-image: linear-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 100% 28px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Liceo</h1>
+    </header>
+
+    <nav>
+        <button class="nav-btn active" onclick="showTab('tasks')">Tareas Pendientes</button>
+        <button class="nav-btn" onclick="showTab('notebooks')">Cuadernolas</button>
+        <button class="nav-btn" onclick="showTab('exams')">Pruebas del Futuro</button>
+        <button class="nav-btn" onclick="showTab('exam-notes')">Temas para la Prueba</button>
+    </nav>
+
+    <main>
+        <!-- SECCION 1: TAREAS PENDIENTES -->
+        <section id="tasks" class="section active">
+            <div class="card">
+                <h2>Agregar Tarea al Calendario</h2>
+                <form id="task-form">
+                    <input type="text" id="task-title" placeholder="¿Qué tarea tienes?" required>
+                    <input type="date" id="task-date" required>
+                    <button type="submit" class="btn-main">Guardar Tarea</button>
+                </form>
+            </div>
+            <div class="card">
+                <h2>Próximas Tareas</h2>
+                <ul id="task-list"></ul>
+            </div>
+        </section>
+
+        <!-- SECCION 2: CUADERNOLAS -->
+        <section id="notebooks" class="section">
+            <div id="subjects-list" class="subjects-grid"></div>
+
+            <div id="notebook-view" class="notebook-view card">
+                <button onclick="closeNotebook()" style="margin-bottom: 15px; cursor: pointer;">Volver a las materias</button>
+                <h2 id="current-subject-title">Materia</h2>
+                
+                <div style="margin-bottom: 10px;">
+                    <button onclick="addPage()" class="btn-main">Nueva Hoja</button>
+                </div>
+
+                <div id="notebook-pages" class="notebook-pages"></div>
+
+                <textarea id="notebook-editor" class="notebook-editor" placeholder="Escribe tus apuntes aquí..." oninput="savePageContent()"></textarea>
+            </div>
+        </section>
+
+        <!-- SECCION 3: PRUEBAS DEL FUTURO -->
+        <section id="exams" class="section">
+            <div class="card">
+                <h2>Agendar Examen / Prueba</h2>
+                <form id="exam-form">
+                    <input type="text" id="exam-title" placeholder="Tema o nombre de la prueba" required>
+                    <select id="exam-subject"></select>
+                    <input type="date" id="exam-date" required>
+                    <button type="submit" class="btn-main">Agendar Prueba</button>
+                </form>
+            </div>
+            <div class="card">
+                <h2>Pruebas Programadas</h2>
+                <ul id="exam-list"></ul>
+            </div>
+        </section>
+
+        <!-- SECCION 4: TEMAS PARA LA PRUEBA -->
+        <section id="exam-notes" class="section">
+            <div class="card">
+                <h2>Temas y Apuntes de Examen</h2>
+                <label for="select-exam-for-notes" style="display: block; margin-bottom: 8px; font-weight: bold;">Selecciona una prueba:</label>
+                <select id="select-exam-for-notes" onchange="loadExamNotesView()" style="width: 100%; margin-bottom: 20px;"></select>
+
+                <div id="exam-notes-container" style="display: none;">
+                    <div style="margin-bottom: 10px;">
+                        <button onclick="addExamNotePage()" class="btn-main">Nueva Hoja de Temas</button>
+                    </div>
+
+                    <div id="exam-notes-pages" class="notebook-pages"></div>
+
+                    <textarea id="exam-notes-editor" class="notebook-editor" placeholder="Escribe aquí los temas, resúmenes y preguntas a estudiar..." oninput="saveExamNoteContent()"></textarea>
+                </div>
+
+                <div id="no-exams-warning" style="display: none; color: #64748b;">
+                    No tienes pruebas agendadas todavía. Agrega una en la pestaña 'Pruebas del Futuro' para empezar a estudiar.
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // LISTA DE MATERIAS
+        const subjects = [
+            "Lengua", "Historia", "Geografía", "Biología", 
+            "Música", "Informática", "Alemán", "Mathematik", "Physik", "Inglés"
+        ];
+
+        // NAVEGACION ENTRE PESTAÑAS
+        function showTab(tabId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabId === 'exam-notes') {
+                populateExamsForNotesSelect();
+            }
+        }
+
+        // LLENAR SELECT DE MATERIAS EN PRUEBAS
+        function populateExamSubjects() {
+            const select = document.getElementById('exam-subject');
+            select.innerHTML = '';
+            subjects.forEach(sub => {
+                select.innerHTML += `<option value="${sub}">${sub}</option>`;
+            });
+        }
+
+        // --- LOGICA DE TAREAS ---
+        let tasks = JSON.parse(localStorage.getItem('app_tasks')) || [];
+
+        document.getElementById('task-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('task-title').value;
+            const date = document.getElementById('task-date').value;
+            tasks.push({ title, date, completed: false });
+            tasks.sort((a, b) => new Date(a.date) - new Date(b.date));
+            saveTasks();
+            document.getElementById('task-form').reset();
+        });
+
+        function saveTasks() {
+            localStorage.setItem('app_tasks', JSON.stringify(tasks));
+            renderTasks();
+        }
+
+        function renderTasks() {
+            const list = document.getElementById('task-list');
+            list.innerHTML = tasks.length === 0 ? '<p>No hay tareas registradas.</p>' : '';
+            tasks.forEach((t, i) => {
+                list.innerHTML += `
+                    <li class="${t.completed ? 'completed' : ''}">
+                        <span><strong>${t.title}</strong> — <small>Para el: ${t.date}</small></span>
+                        <div class="actions">
+                            <button class="btn-toggle" onclick="toggleTask(${i})">${t.completed ? 'Desmarcar' : 'Listo'}</button>
+                            <button class="btn-delete" onclick="deleteTask(${i})">Eliminar</button>
+                        </div>
+                    </li>
+                `;
+            });
+        }
+
+        function toggleTask(i) {
+            tasks[i].completed = !tasks[i].completed;
+            saveTasks();
+        }
+
+        function deleteTask(i) {
+            tasks.splice(i, 1);
+            saveTasks();
+        }
+
+        // --- LOGICA DE CUADERNOLAS ---
+        let notebooksData = JSON.parse(localStorage.getItem('app_notebooks')) || {};
+        let currentSubject = '';
+        let currentPageIndex = 0;
+
+        function renderSubjects() {
+            const grid = document.getElementById('subjects-list');
+            grid.innerHTML = '';
+            subjects.forEach(sub => {
+                grid.innerHTML += `<div class="subject-card" onclick="openNotebook('${sub}')">${sub}</div>`;
+            });
+        }
+
+        function openNotebook(subject) {
+            currentSubject = subject;
+            if (!notebooksData[subject]) {
+                notebooksData[subject] = ["Página 1: Apuntes iniciales..."];
+            }
+            currentPageIndex = 0;
+            
+            document.getElementById('subjects-list').style.display = 'none';
+            document.getElementById('notebook-view').style.display = 'block';
+            document.getElementById('current-subject-title').innerText = `Cuadernola de ${subject}`;
+            
+            renderPagesTabs();
+        }
+
+        function closeNotebook() {
+            document.getElementById('subjects-list').style.display = 'grid';
+            document.getElementById('notebook-view').style.display = 'none';
+        }
+
+        function renderPagesTabs() {
+            const tabs = document.getElementById('notebook-pages');
+            tabs.innerHTML = '';
+            const pages = notebooksData[currentSubject];
+
+            pages.forEach((_, i) => {
+                tabs.innerHTML += `
+                    <div class="page-tab ${i === currentPageIndex ? 'active' : ''}" onclick="selectPage(${i})">
+                        Hoja ${i + 1}
+                    </div>
+                `;
+            });
+
+            document.getElementById('notebook-editor').value = pages[currentPageIndex] || '';
+        }
+
+        function selectPage(index) {
+            currentPageIndex = index;
+            renderPagesTabs();
+        }
+
+        function addPage() {
+            notebooksData[currentSubject].push("");
+            currentPageIndex = notebooksData[currentSubject].length - 1;
+            saveNotebooks();
+            renderPagesTabs();
+        }
+
+        function savePageContent() {
+            const text = document.getElementById('notebook-editor').value;
+            notebooksData[currentSubject][currentPageIndex] = text;
+            saveNotebooks();
+        }
+
+        function saveNotebooks() {
+            localStorage.setItem('app_notebooks', JSON.stringify(notebooksData));
+        }
+
+        // --- LOGICA DE PRUEBAS DEL FUTURO ---
+        let exams = JSON.parse(localStorage.getItem('app_exams')) || [];
+
+        document.getElementById('exam-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('exam-title').value;
+            const subject = document.getElementById('exam-subject').value;
+            const date = document.getElementById('exam-date').value;
+            
+            exams.push({ id: Date.now(), title, subject, date });
+            exams.sort((a, b) => new Date(a.date) - new Date(b.date));
+            saveExams();
+            document.getElementById('exam-form').reset();
+        });
+
+        function saveExams() {
+            localStorage.setItem('app_exams', JSON.stringify(exams));
+            renderExams();
+        }
+
+        function renderExams() {
+            const list = document.getElementById('exam-list');
+            list.innerHTML = exams.length === 0 ? '<p>No hay pruebas agendadas.</p>' : '';
+            exams.forEach((ex, i) => {
+                list.innerHTML += `
+                    <li>
+                        <span><strong>[${ex.subject}]</strong> ${ex.title} — <small>Fecha: ${ex.date}</small></span>
+                        <button class="btn-delete" onclick="deleteExam(${i})">Eliminar</button>
+                    </li>
+                `;
+            });
+        }
+
+        function deleteExam(i) {
+            const examId = exams[i].id;
+            exams.splice(i, 1);
+            delete examNotesData[examId];
+            saveExamNotes();
+            saveExams();
+        }
+
+        // --- LOGICA DE TEMAS PARA LA PRUEBA (OPCION 4) ---
+        let examNotesData = JSON.parse(localStorage.getItem('app_exam_notes')) || {};
+        let currentExamId = null;
+        let currentExamPageIndex = 0;
+
+        function populateExamsForNotesSelect() {
+            const select = document.getElementById('select-exam-for-notes');
+            const container = document.getElementById('exam-notes-container');
+            const warning = document.getElementById('no-exams-warning');
+
+            select.innerHTML = '';
+
+            if (exams.length === 0) {
+                container.style.display = 'none';
+                warning.style.display = 'block';
+                select.style.display = 'none';
+                return;
+            }
+
+            warning.style.display = 'none';
+            select.style.display = 'block';
+
+            exams.forEach(ex => {
+                select.innerHTML += `<option value="${ex.id}">[${ex.subject}] ${ex.title} (${ex.date})</option>`;
+            });
+
+            loadExamNotesView();
+        }
+
+        function loadExamNotesView() {
+            const select = document.getElementById('select-exam-for-notes');
+            currentExamId = select.value;
+
+            if (!currentExamId) return;
+
+            if (!examNotesData[currentExamId]) {
+                examNotesData[currentExamId] = ["Hoja 1: Temas a estudiar..."];
+            }
+
+            currentExamPageIndex = 0;
+            document.getElementById('exam-notes-container').style.display = 'block';
+            renderExamNotesPagesTabs();
+        }
+
+        function renderExamNotesPagesTabs() {
+            const tabs = document.getElementById('exam-notes-pages');
+            tabs.innerHTML = '';
+            const pages = examNotesData[currentExamId] || [];
+
+            pages.forEach((_, i) => {
+                tabs.innerHTML += `
+                    <div class="page-tab ${i === currentExamPageIndex ? 'active' : ''}" onclick="selectExamNotePage(${i})">
+                        Hoja ${i + 1}
+                    </div>
+                `;
+            });
+
+            document.getElementById('exam-notes-editor').value = pages[currentExamPageIndex] || '';
+        }
+
+        function selectExamNotePage(index) {
+            currentExamPageIndex = index;
+            renderExamNotesPagesTabs();
+        }
+
+        function addExamNotePage() {
+            if (!examNotesData[currentExamId]) examNotesData[currentExamId] = [];
+            examNotesData[currentExamId].push("");
+            currentExamPageIndex = examNotesData[currentExamId].length - 1;
+            saveExamNotes();
+            renderExamNotesPagesTabs();
+        }
+
+        function saveExamNoteContent() {
+            const text = document.getElementById('exam-notes-editor').value;
+            examNotesData[currentExamId][currentExamPageIndex] = text;
+            saveExamNotes();
+        }
+
+        function saveExamNotes() {
+            localStorage.setItem('app_exam_notes', JSON.stringify(examNotesData));
+        }
+
+        // INICIALIZACION
+        populateExamSubjects();
+        renderTasks();
+        renderSubjects();
+        renderExams();
+    </script>
+</body>
+</html>
